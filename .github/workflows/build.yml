@@ -141,7 +141,13 @@ jobs:
           APPLE_API_ISSUER: ${{ startsWith(matrix.os, 'macos') && secrets.APPLE_API_ISSUER || '' }}
           APPLE_TEAM_ID: ${{ startsWith(matrix.os, 'macos') && secrets.APPLE_TEAM_ID || '' }}
           ZTOOLS_OFFICIAL_SYNC_SERVER_URL: ${{ vars.ZTOOLS_SERVER_URL || 'http://dev.991788.xyz' }}
-        run: ${{ matrix.build_cmd }}
+        shell: bash
+        run: |
+          # 空字符串的环境变量也会被 electron-builder 当作"已设置"，这里把空值的变量彻底移除
+          for v in CSC_LINK CSC_KEY_PASSWORD CSC_NAME APPLE_API_KEY_ID APPLE_API_ISSUER APPLE_TEAM_ID; do
+            if [ -z "${!v}" ]; then unset "$v"; fi
+          done
+          ${{ matrix.build_cmd }}
 
       - name: Verify macOS signature and notarization
         if: startsWith(matrix.os, 'macos') && env.HAS_SIGNING == 'true'
